@@ -6,6 +6,9 @@ import 'package:teacher_app/src/features/syllabus/presentation/screens/syllabus_
 import 'package:teacher_app/src/features/exam/presentation/screens/exam_screen.dart';
 import 'package:teacher_app/src/features/profile/presentation/screens/profile_screen.dart';
 
+import '../../features/evaluation/presentation/screens/evaluation_screen.dart';
+import '../../features/literature/presentation/screens/literature_screen.dart';
+
 final GoRouter appRouter = GoRouter(
   initialLocation: '/home',
   routes: [
@@ -34,19 +37,29 @@ final GoRouter appRouter = GoRouter(
           name: 'profile',
           builder: (context, state) => const ProfileScreen(),
         ),
+        GoRoute(
+          path: '/literature',
+          builder: (context, state) => const LiteratureScreen(),
+        ),
+
+        GoRoute(
+          path: '/evaluation',
+          builder: (context, state) => const EvaluationScreen(),
+        ),
       ],
     ),
   ],
 );
 
-/// Обёртка с нижней навигацией
+
+
 class TeacherScaffold extends StatelessWidget {
   final Widget child;
   const TeacherScaffold({super.key, required this.child});
 
   static final _tabs = [
     ('Главная', Icons.home, '/home'),
-    ('Силабус', Icons.book, '/syllabus'),
+    ('Силабус', Icons.menu_book, '/syllabus'),
     ('Экзамен', Icons.assignment, '/exam'),
     ('Профиль', Icons.person, '/profile'),
   ];
@@ -54,20 +67,23 @@ class TeacherScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final String location = GoRouterState.of(context).uri.toString();
-
     int currentIndex = _tabs.indexWhere((tab) => location.startsWith(tab.$3));
     if (currentIndex == -1) currentIndex = 0;
 
     return Scaffold(
       body: child,
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: currentIndex,
-        onTap: (index) => context.go(_tabs[index].$3),
-        items: _tabs
-            .map((tab) => BottomNavigationBarItem(
-          icon: Icon(tab.$2),
-          label: tab.$1,
-        ))
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: currentIndex,
+        onDestinationSelected: (index) {
+          context.go(_tabs[index].$3);
+        },
+        destinations: _tabs
+            .map(
+              (tab) => NavigationDestination(
+            icon: Icon(tab.$2),
+            label: tab.$1,
+          ),
+        )
             .toList(),
       ),
     );
