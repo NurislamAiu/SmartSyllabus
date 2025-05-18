@@ -1,0 +1,9 @@
+{
+  "@@locale": "en",
+  "appTitle": "SmartSyllabus",
+  "home": "Home",
+  "syllabus": "Syllabus",
+  "exam": "Exam",
+  "profile": "Profile",
+  "toggleTheme": "Toggle Theme"
+}
