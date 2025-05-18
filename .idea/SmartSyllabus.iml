@@ -6,12 +6,12 @@
       <excludeFolder url="file://$MODULE_DIR$/apps/admin_app/.dart_tool" />
       <excludeFolder url="file://$MODULE_DIR$/apps/admin_app/.pub" />
       <excludeFolder url="file://$MODULE_DIR$/apps/admin_app/build" />
-      <excludeFolder url="file://$MODULE_DIR$/apps/student_app/.dart_tool" />
-      <excludeFolder url="file://$MODULE_DIR$/apps/student_app/.pub" />
-      <excludeFolder url="file://$MODULE_DIR$/apps/student_app/build" />
       <excludeFolder url="file://$MODULE_DIR$/apps/teacher_app/.dart_tool" />
       <excludeFolder url="file://$MODULE_DIR$/apps/teacher_app/.pub" />
       <excludeFolder url="file://$MODULE_DIR$/apps/teacher_app/build" />
+      <excludeFolder url="file://$MODULE_DIR$/apps/dean_app/.dart_tool" />
+      <excludeFolder url="file://$MODULE_DIR$/apps/dean_app/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/apps/dean_app/build" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

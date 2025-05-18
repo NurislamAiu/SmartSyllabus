@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-
-import 'package:teacher_app/src/features/syllabus/presentation/screens/home_screen.dart';
-import 'package:teacher_app/src/features/syllabus/presentation/screens/syllabus_screen.dart';
-import 'package:teacher_app/src/features/exam/presentation/screens/exam_screen.dart';
-import 'package:teacher_app/src/features/profile/presentation/screens/profile_screen.dart';
+import 'package:teacher_app/src/core/router/route_names.dart';
+import 'package:teacher_app/src/core/router/route_paths.dart';
 
 import '../../features/evaluation/presentation/screens/evaluation_screen.dart';
+import '../../features/exam/presentation/screens/exam_screen.dart';
 import '../../features/literature/presentation/screens/literature_screen.dart';
+import '../../features/profile/presentation/screens/profile_screen.dart';
+import '../../features/syllabus/presentation/screens/home_screen.dart';
+import '../../features/syllabus/presentation/screens/syllabus_screen.dart';
 
 final GoRouter appRouter = GoRouter(
-  initialLocation: '/home',
+  initialLocation: RoutePaths.home,
   routes: [
     ShellRoute(
       builder: (context, state, child) {
@@ -18,32 +19,33 @@ final GoRouter appRouter = GoRouter(
       },
       routes: [
         GoRoute(
-          path: '/home',
-          name: 'home',
+          path: RoutePaths.home,
+          name: RouteNames.home,
           builder: (context, state) => const HomeScreen(),
         ),
         GoRoute(
-          path: '/syllabus',
-          name: 'syllabus',
+          path: RoutePaths.syllabus,
+          name: RouteNames.syllabus,
           builder: (context, state) => const SyllabusScreen(),
         ),
         GoRoute(
-          path: '/exam',
-          name: 'exam',
+          path: RoutePaths.exam,
+          name: RouteNames.exam,
           builder: (context, state) => const ExamScreen(),
         ),
         GoRoute(
-          path: '/profile',
-          name: 'profile',
+          path: RoutePaths.profile,
+          name: RouteNames.profile,
           builder: (context, state) => const ProfileScreen(),
         ),
         GoRoute(
-          path: '/literature',
+          path: RoutePaths.literature,
+          name: RouteNames.literature,
           builder: (context, state) => const LiteratureScreen(),
         ),
-
         GoRoute(
-          path: '/evaluation',
+          path: RoutePaths.evaluation,
+          name: RouteNames.evaluation,
           builder: (context, state) => const EvaluationScreen(),
         ),
       ],
