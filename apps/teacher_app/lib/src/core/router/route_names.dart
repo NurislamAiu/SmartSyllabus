@@ -5,4 +5,5 @@ class RouteNames {
   static const profile = 'profile';
   static const literature = 'literature';
   static const evaluation = 'evaluation';
+  static const createSyllabus = 'createSyllabus';
 }

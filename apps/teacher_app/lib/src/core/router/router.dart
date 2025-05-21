@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:teacher_app/src/features/syllabus/presentation/screens/create_syllabus_screen.dart';
 
 import 'route_names.dart';
 import 'route_paths.dart';
@@ -65,6 +66,14 @@ final GoRouter appRouter = GoRouter(
           pageBuilder: (context, state) => NoTransitionPage(
             key: state.pageKey,
             child: const EvaluationScreen(),
+          ),
+        ),
+        GoRoute(
+          path: RoutePaths.createSyllabus,
+          name: RouteNames.createSyllabus,
+          pageBuilder: (context, state) => NoTransitionPage(
+            key: state.pageKey,
+            child: const CreateSyllabusScreen(),
           ),
         ),
       ],

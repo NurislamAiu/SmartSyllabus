@@ -1,10 +1,13 @@
+import 'dart:io';
 
-
-
-
-
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:syncfusion_flutter_pdf/pdf.dart';
+import 'package:teacher_app/src/core/router/route_names.dart';
+
+import '../../../../core/router/route_paths.dart';
 
 class Syllabus {
   final String title;
@@ -20,6 +23,17 @@ class Syllabus {
     required this.status,
     this.isAI = false,
   });
+}
+
+String _extractBetween(String text, String start, String end) {
+  try {
+    final startIndex = text.indexOf(start);
+    final endIndex = text.indexOf(end, startIndex + start.length);
+    if (startIndex == -1 || endIndex == -1) return '';
+    return text.substring(startIndex + start.length, endIndex).trim();
+  } catch (_) {
+    return '';
+  }
 }
 
 final List<Syllabus> mockSyllabusList = [
@@ -90,7 +104,13 @@ class SyllabusScreen extends StatelessWidget {
                 title: 'Создать вручную',
                 subtitle: 'Ввести все поля самостоятельно',
                 onTap: () {
-                  Navigator.pop(context);
+                  // Закрыть диалог из самого "корневого" контекста
+                  Navigator.of(context, rootNavigator: true).pop();
+
+                  // Навигация — немного позже
+                  Future.delayed(Duration.zero, () {
+                    GoRouter.of(context).push(RoutePaths.createSyllabus);
+                  });
                 },
                 gradient: const LinearGradient(
                   colors: [Color(0xFF43CEA2), Color(0xFF185A9D)],
@@ -103,9 +123,92 @@ class SyllabusScreen extends StatelessWidget {
                 icon: Icons.upload_file,
                 title: 'Импортировать из файла',
                 subtitle: 'Загрузить готовый силабус',
-                onTap: () {
-                  Navigator.pop(context);
-                },
+                  onTap: () async {
+                    Navigator.of(context, rootNavigator: true).pop();
+
+                    final result = await FilePicker.platform.pickFiles(
+                      type: FileType.custom,
+                      allowedExtensions: ['pdf'],
+                    );
+
+                    if (result != null && result.files.single.path != null) {
+                      final file = File(result.files.single.path!);
+                      final bytes = await file.readAsBytes();
+                      final document = PdfDocument(inputBytes: bytes);
+                      final rawText = PdfTextExtractor(document).extractText();
+                      document.dispose();
+
+                      final text = rawText.replaceAll('\n', ' ').replaceAll(RegExp(r'\s+'), ' ');
+
+                      final title = _extractBetween(text, 'по дисциплине', '(код');
+                      final code = _extractBetween(text, 'по дисциплине', 'Программирование')
+                          .split(' ')
+                          .firstWhere((e) => e.startsWith('JP'), orElse: () => '');
+
+                      final program = _extractBetween(text, 'по образовательной программе', 'осенний');
+                      final credits = _extractBetween(text, 'Кол-во кредитов -', 'Всего');
+                      final controlType = _extractBetween(text, 'итогового контроля', 'Лекции').trim().toLowerCase();
+                      final lecturer = _extractBetween(text, 'Лектор', 'e-mail');
+                      final contact = _extractBetween(text, 'e-mail и телефон:', 'Zoom ID');
+                      final goal = _extractBetween(text, 'Целью изучения дисциплины', 'РО');
+
+                      // 🔍 Универсальный парсинг всех РО (РО10 — ...; РО11 — ...)
+                      final outcomes = RegExp(r'(РО\d{1,2})\s*[-–—]\s*(.*?)(?=(РО\d{1,2})|$)', dotAll: true)
+                          .allMatches(text)
+                          .map((match) => '${match.group(1)} — ${match.group(2)?.trim()}')
+                          .toList();
+
+                      // 📚 Литература
+                      final litStart = text.indexOf('Литература');
+                      final litEnd = text.indexOf('Интернет ресурсы');
+                      final literature = litStart != -1 && litEnd != -1
+                          ? RegExp(r'\d+\.\s(.*?)\s(?=\d+\.\s|Интернет ресурсы|$)', dotAll: true)
+                          .allMatches(text.substring(litStart, litEnd))
+                          .map((m) => m.group(1)!.trim())
+                          .toList()
+                          : [];
+
+                      // ❓ Вопросы
+                      final exStart = text.indexOf('Экзаменационные вопросы');
+                      final examQuestions = exStart != -1
+                          ? RegExp(r'\d+\.\s(.*?)(?=\d+\.\s|$)', dotAll: true)
+                          .allMatches(text.substring(exStart))
+                          .map((m) => m.group(1)!.trim())
+                          .toList()
+                          : [];
+
+                      print('📄 Название: $title');
+                      print('📄 Код: $code');
+                      print('📄 Программа: $program');
+                      print('📄 Кредиты: $credits');
+                      print('📄 Контроль: $controlType');
+                      print('📄 Преподаватель: $lecturer');
+                      print('📄 Контакт: $contact');
+                      print('📄 Цель: $goal');
+                      print('🧠 Результаты обучения: ${outcomes.length}');
+                      print('📚 Литература: ${literature.length}');
+                      print('❓ Вопросы: ${examQuestions.length}');
+
+                      Future.microtask(() {
+                        GoRouter.of(context).pushNamed(
+                          RouteNames.createSyllabus,
+                          extra: {
+                            'title': title,
+                            'code': code,
+                            'program': program,
+                            'credits': credits.trim(),
+                            'lecturer': lecturer,
+                            'contact': contact,
+                            'controlType': controlType,
+                            'goal': goal,
+                            'outcomes': outcomes,
+                            'literature': literature,
+                            'examQuestions': examQuestions,
+                          },
+                        );
+                      });
+                    }
+                  },
                 gradient: const LinearGradient(
                   colors: [Color(0xFFFF512F), Color(0xFFDD2476)],
                 ),
