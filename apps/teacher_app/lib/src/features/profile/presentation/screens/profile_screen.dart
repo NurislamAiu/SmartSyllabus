@@ -15,7 +15,7 @@ class ProfileScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // Профиль
+          // Профилььььььььь
           Row(
             children: [
               const CircleAvatar(
