@@ -9,7 +9,8 @@ class NotificationMockDataSource implements NotificationDataSource {
     return List.generate(limit, (i) => NotificationItem(
       id: '\$i',
       message: 'Уведомление #\$i',
-      date: DateTime.now().subtract(Duration(hours: i)),
+      title: 'Заголовок уведомления #\$i',
+      createdAt: DateTime.now().subtract(Duration(hours: i)),
     ));
   }
 }
