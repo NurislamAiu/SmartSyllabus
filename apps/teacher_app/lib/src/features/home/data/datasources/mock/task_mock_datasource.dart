@@ -6,10 +6,13 @@ class TaskMockDataSource implements TaskDataSource {
   @override
   Future<List<Task>> fetchUpcomingTasks({int limit = 3}) async {
     await Future.delayed(const Duration(milliseconds: 200));
-    return List.generate(limit, (i) => Task(
-      id: '\$i',
-      title: 'Задача #\$i',
-      dueDate: DateTime.now().add(Duration(days: i + 1)),
-    ));
+    return List.generate(limit, (i) {
+      final index = i + 1;
+      return Task(
+        id: '$index',
+        title: 'Задача №$index',
+        dueDate: DateTime.now().add(Duration(days: index)),
+      );
+    });
   }
 }
