@@ -1,15 +1,9 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
 import 'package:pdf/widgets.dart' as pw;
 import 'package:pdf/pdf.dart';
-import 'package:printing/printing.dart';
-import 'package:path_provider/path_provider.dart';
-import 'dart:io';
 import 'package:flutter/services.dart' show rootBundle;
 
 class CreateSyllabusScreen extends StatefulWidget {
@@ -22,7 +16,6 @@ class CreateSyllabusScreen extends StatefulWidget {
 class _CreateSyllabusScreenState extends State<CreateSyllabusScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  // Контроллеры
   final _titleController = TextEditingController();
   final _codeController = TextEditingController();
   final _programController = TextEditingController();
@@ -42,7 +35,6 @@ class _CreateSyllabusScreenState extends State<CreateSyllabusScreen> {
   void initState() {
     super.initState();
 
-    // Получаем данные из GoRouter.extra
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final extra = GoRouterState.of(context).extra as Map<String, dynamic>?;
 
@@ -55,7 +47,6 @@ class _CreateSyllabusScreenState extends State<CreateSyllabusScreen> {
         _contactController.text = extra['contact'] ?? '';
         _goalController.text = extra['goal'] ?? '';
 
-        // Автоустановка формы контроля
         final controlFromExtra =
             (extra['controlType'] ?? '').toString().toLowerCase();
         if (controlFromExtra.contains('пись'))
@@ -65,16 +56,13 @@ class _CreateSyllabusScreenState extends State<CreateSyllabusScreen> {
         else if (controlFromExtra.contains('уст'))
           controlType = 'Устный';
 
-        // Литература
         final List<String>? litList = extra['literature']?.cast<String>();
         if (litList != null) literature.addAll(litList);
 
-        // Вопросы
         final List<String>? questionList =
             extra['examQuestions']?.cast<String>();
         if (questionList != null) examQuestions.addAll(questionList);
 
-        // Результаты обучения
         final List<String>? outcomesList = extra['outcomes']?.cast<String>();
         if (outcomesList != null) learningOutcomes.addAll(outcomesList);
       }
@@ -125,84 +113,454 @@ class _CreateSyllabusScreenState extends State<CreateSyllabusScreen> {
       };
 
       debugPrint('✅ Силабус сохранён: $data');
-      await generatePdf(data);
-      // TODO: сохранить в Firebase или БД
+      await generatePdfSkeleton();
+
       Navigator.pop(context);
     }
   }
 
-
-  Future<void> generatePdf(Map<String, dynamic> data) async {
+  Future<void> generatePdfSkeleton() async {
     final pdf = pw.Document();
+
     final fontData = await rootBundle.load('assets/fonts/Roboto-Regular.ttf');
     final ttf = pw.Font.ttf(fontData);
 
-    final theme = pw.ThemeData.withFont(base: ttf);
-    final normal = pw.TextStyle(font: ttf, fontSize: 12);
-    final bold = pw.TextStyle(font: ttf, fontSize: 14, fontWeight: pw.FontWeight.bold);
+    final bold = pw.TextStyle(
+      font: ttf,
+      fontWeight: pw.FontWeight.bold,
+      fontSize: 8,
+    );
+    final normal = pw.TextStyle(font: ttf, fontSize: 9);
 
-    // Главная информация — первая страница
-    pdf.addPage(pw.MultiPage(
-      pageFormat: PdfPageFormat.a4,
-      theme: theme,
-      build: (context) => [
-        pw.Text('СИЛАБУС', style: pw.TextStyle(font: ttf, fontSize: 24, fontWeight: pw.FontWeight.bold)),
-        pw.SizedBox(height: 10),
-        pw.Text('Название: ${data['title']}', style: normal),
-        pw.Text('Код: ${data['code']}', style: normal),
-        pw.Text('Программа: ${data['program']}', style: normal),
-        pw.Text('Кредиты: ${data['credits']}', style: normal),
-        pw.Text('Преподаватель: ${data['lecturer']}', style: normal),
-        pw.Text('Контакт: ${data['contact']}', style: normal),
-        pw.Text('Семестр: ${data['semester']}', style: normal),
-        pw.Text('Контроль: ${data['controlType']}', style: normal),
-        pw.SizedBox(height: 12),
-        pw.Text('Цель дисциплины:', style: bold),
-        pw.Text(data['goal'] ?? '', style: normal),
-      ],
-    ));
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(24),
+        theme: pw.ThemeData.withFont(base: ttf),
+        build:
+            (context) => [
+              pw.Center(
+                child: pw.Text('АСТАНА ХАЛЫҚАРАЛЫҚ УНИВЕРСИТЕТІ', style: bold),
+              ),
+              pw.Center(
+                child: pw.Text('МЕЖДУНАРОДНЫЙ УНИВЕРСИТЕТ АСТАНА', style: bold),
+              ),
+              pw.SizedBox(height: 20),
 
-    // ⚙️ Безопасное добавление списка в виде страниц
-    void safelyAddList(String title, List items, int chunkSize) {
-      for (int i = 0; i < items.length; i += chunkSize) {
-        final chunk = items.sublist(i, i + chunkSize > items.length ? items.length : i + chunkSize);
-        try {
-          pdf.addPage(pw.MultiPage(
-            pageFormat: PdfPageFormat.a4,
-            theme: theme,
-            build: (context) => [
-              pw.Text(title, style: bold),
-              pw.SizedBox(height: 6),
-              ...chunk.map((e) => pw.Bullet(text: e.toString(), style: normal)),
+              /// Заголовок "Общая информация"
+              pw.Table(
+                border: pw.TableBorder.all(),
+                columnWidths: {0: pw.FlexColumnWidth(1)},
+                children: [
+                  pw.TableRow(
+                    children: [
+                      pw.Container(
+                        alignment: pw.Alignment.center,
+                        padding: const pw.EdgeInsets.all(6),
+                        child: pw.Text('Общая информация', style: bold),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+
+              /// Таблица с данными
+              pw.Table(
+                border: pw.TableBorder.all(),
+                columnWidths: {
+                  0: pw.FlexColumnWidth(3),
+                  1: pw.FlexColumnWidth(5),
+                  2: pw.FlexColumnWidth(2),
+                  3: pw.FlexColumnWidth(2),
+                },
+                children: [
+                  /// Первая строка
+                  pw.TableRow(
+                    children: [
+                      pw.Container(
+                        alignment: pw.Alignment.center,
+                        padding: const pw.EdgeInsets.all(8),
+                        child: pw.Text(
+                          'Код и название дисциплины',
+                          style: bold,
+                        ),
+                      ),
+                      pw.Column(
+                        children: [
+                          pw.Container(
+                            alignment: pw.Alignment.center,
+                            padding: const pw.EdgeInsets.all(6),
+                            child: pw.Text('Кол-во кредитов – 6', style: bold),
+                          ),
+                          pw.Table(
+                            border: pw.TableBorder.all(),
+                            columnWidths: {
+                              0: pw.FlexColumnWidth(1),
+                              1: pw.FlexColumnWidth(2.5),
+                              2: pw.FlexColumnWidth(1),
+                              3: pw.FlexColumnWidth(1),
+                            },
+                            children: [
+                              pw.TableRow(
+                                children: [
+                                  pw.Center(
+                                    child: pw.Padding(
+                                      padding: const pw.EdgeInsets.all(4),
+                                      child: pw.Text('Лекции', style: bold),
+                                    ),
+                                  ),
+                                  pw.Center(
+                                    child: pw.Padding(
+                                      padding: const pw.EdgeInsets.all(4),
+                                      child: pw.Text(
+                                        'Семинары/\nпракт./лаб. занятия',
+                                        style: bold,
+                                      ),
+                                    ),
+                                  ),
+                                  pw.Center(
+                                    child: pw.Padding(
+                                      padding: const pw.EdgeInsets.all(4),
+                                      child: pw.Text('СРСП', style: bold),
+                                    ),
+                                  ),
+                                  pw.Center(
+                                    child: pw.Padding(
+                                      padding: const pw.EdgeInsets.all(4),
+                                      child: pw.Text('СРС', style: bold),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      pw.Center(child: pw.Text('Всего\nчасов', style: bold)),
+                      pw.Center(
+                        child: pw.Text(
+                          'Форма\nитогового\nконтроля',
+                          style: bold,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  /// Вторая строка (пустая, можно будет заполнить)
+                  pw.TableRow(
+                    children: [
+                      pw.Container(height: 20),
+                      pw.Table(
+                        border: pw.TableBorder.all(),
+                        columnWidths: {
+                          0: pw.FlexColumnWidth(1),
+                          1: pw.FlexColumnWidth(2.5),
+                          2: pw.FlexColumnWidth(1),
+                          3: pw.FlexColumnWidth(1),
+                        },
+                        children: [
+                          pw.TableRow(
+                            children: List.generate(4, (_) {
+                              return pw.Container(height: 20);
+                            }),
+                          ),
+                        ],
+                      ),
+                      pw.Container(height: 20),
+                      pw.Container(height: 20),
+                    ],
+                  ),
+                ],
+              ),
+
+              pw.Table(
+                border: pw.TableBorder.all(),
+                columnWidths: {0: pw.FlexColumnWidth(1)},
+                children: [
+                  pw.TableRow(
+                    children: [
+                      pw.Container(
+                        alignment: pw.Alignment.center,
+                        padding: const pw.EdgeInsets.all(6),
+                        child: pw.Text('Контактная информация', style: bold),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+
+              pw.Table(
+                border: pw.TableBorder.all(),
+                columnWidths: {
+                  0: pw.FlexColumnWidth(3),
+                  1: pw.FlexColumnWidth(9),
+                },
+                children: [
+                  pw.TableRow(
+                    children: [
+                      pw.Container(
+                        padding: const pw.EdgeInsets.all(6),
+                        child: pw.Text('Высшая школа', style: bold),
+                      ),
+                      pw.Container(
+                        padding: const pw.EdgeInsets.all(6),
+                        child: pw.Text(
+                          'Информационных технологий и инженерии',
+                          style: normal,
+                        ),
+                      ),
+                    ],
+                  ),
+                  pw.TableRow(
+                    children: [
+                      pw.Container(
+                        padding: const pw.EdgeInsets.all(6),
+                        child: pw.Text('Лектор', style: bold),
+                      ),
+                      pw.Container(
+                        padding: const pw.EdgeInsets.all(6),
+                        child: pw.Text(
+                          'Қайұпов Е.К., старший преподаватель',
+                          style: normal,
+                        ),
+                      ),
+                    ],
+                  ),
+                  pw.TableRow(
+                    children: [
+                      pw.Container(
+                        padding: const pw.EdgeInsets.all(6),
+                        child: pw.Text('e-mail и телефон:', style: bold),
+                      ),
+                      pw.Container(
+                        padding: const pw.EdgeInsets.all(6),
+                        child: pw.Text('yerik.kai@gmail.com', style: normal),
+                      ),
+                    ],
+                  ),
+                  pw.TableRow(
+                    children: [
+                      pw.Container(
+                        padding: const pw.EdgeInsets.all(6),
+                        child: pw.Text('Zoom ID', style: bold),
+                      ),
+                      pw.Container(
+                        padding: const pw.EdgeInsets.all(6),
+                        child: pw.Text('', style: normal),
+                      ),
+                    ],
+                  ),
+                  pw.TableRow(
+                    children: [
+                      pw.Container(
+                        padding: const pw.EdgeInsets.all(6),
+                        child: pw.Text('Ассистент', style: bold),
+                      ),
+                      pw.Container(
+                        padding: const pw.EdgeInsets.all(6),
+                        child: pw.Text('', style: normal),
+                      ),
+                    ],
+                  ),
+                  pw.TableRow(
+                    children: [
+                      pw.Container(
+                        padding: const pw.EdgeInsets.all(6),
+                        child: pw.Text('e-mail и телефон:', style: bold),
+                      ),
+                      pw.Container(
+                        padding: const pw.EdgeInsets.all(6),
+                        child: pw.Text('', style: normal),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+
+              pw.SizedBox(height: 10),
+              pw.Table(
+                border: pw.TableBorder.all(),
+                columnWidths: {0: pw.FlexColumnWidth(1)},
+                children: [
+                  pw.TableRow(
+                    children: [
+                      pw.Container(
+                        alignment: pw.Alignment.center,
+                        padding: const pw.EdgeInsets.all(6),
+                        child: pw.Text('Академическая информация', style: bold),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+
+              pw.Table(
+                border: pw.TableBorder.all(),
+                columnWidths: {
+                  0: pw.FlexColumnWidth(4),
+                  1: pw.FlexColumnWidth(6),
+                },
+                children: [
+                  pw.TableRow(
+                    children: [
+                      pw.Text(
+                        'Краткое описание дисциплины\n(согласно ЕСУВО)',
+                        style: bold,
+                      ),
+                      pw.Text(
+                        'Результаты обучения\n(согласно ЕСУВО)',
+                        style: bold,
+                      ),
+                    ],
+                  ),
+
+                  pw.TableRow(
+                    children: [
+                      pw.Text(' ', style: normal),
+
+                      pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        children: [
+                          pw.Text(' ', style: normal),
+
+                          pw.SizedBox(height: 6),
+
+                          pw.Table(
+                            border: pw.TableBorder.all(),
+                            columnWidths: {
+                              0: pw.FlexColumnWidth(1),
+                              1: pw.FlexColumnWidth(1),
+                            },
+                            children: [
+                              pw.TableRow(
+                                children: [
+                                  pw.Text(
+                                    'PO 10,11,15 по дисциплине',
+                                    style: bold,
+                                  ),
+                                  pw.Text(
+                                    'Индикаторы достижения PO по дисциплине',
+                                    style: bold,
+                                  ),
+                                ],
+                              ),
+                              pw.TableRow(
+                                children: [
+                                  pw.Text(' ', style: normal),
+                                  pw.Text(' ', style: normal),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+
+              pw.Table(
+                border: pw.TableBorder.all(),
+                columnWidths: {
+                  0: pw.FlexColumnWidth(4),
+                  1: pw.FlexColumnWidth(6),
+                },
+                children: [
+                  pw.TableRow(
+                    children: [
+                      pw.Text('Пререквизиты', style: bold),
+                      pw.Text('', style: normal),
+                    ],
+                  ),
+                  pw.TableRow(
+                    children: [
+                      pw.Text('Постреквизиты', style: bold),
+                      pw.Text('', style: normal),
+                    ],
+                  ),
+                ],
+              ),
+
+              pw.Table(
+                border: pw.TableBorder.all(),
+                columnWidths: {
+                  0: pw.FlexColumnWidth(4),
+                  1: pw.FlexColumnWidth(6),
+                },
+                children: [
+                  pw.TableRow(
+                    children: [
+                      pw.Text('Литература и ресурсы**', style: bold),
+                      pw.Text('', style: normal),
+                    ],
+                  ),
+                ],
+              ),
+
+              pw.SizedBox(height: 10),
+
+              pw.Table(
+                border: pw.TableBorder.all(),
+                columnWidths: {0: pw.FlexColumnWidth(10)},
+                children: [
+                  pw.TableRow(
+                    children: [
+                      pw.Container(
+                        alignment: pw.Alignment.center,
+                        padding: const pw.EdgeInsets.all(6),
+                        child: pw.Text('Политика дисциплины', style: bold),
+                      ),
+                    ],
+                  ),
+
+                  pw.TableRow(
+                    children: [
+                      pw.Container(
+                        padding: const pw.EdgeInsets.all(6),
+                        height: 150,
+                        child: pw.Text('', style: normal),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+
+              pw.Table(
+                border: pw.TableBorder.all(),
+                columnWidths: {
+                  0: pw.FlexColumnWidth(3),
+                  1: pw.FlexColumnWidth(7),
+                },
+                children: [
+                  pw.TableRow(
+                    children: [
+                      pw.Container(
+                        padding: const pw.EdgeInsets.all(6),
+                        alignment: pw.Alignment.centerLeft,
+                        child: pw.Text(
+                          'Политика оценивания и аттестации',
+                          style: bold,
+                        ),
+                      ),
+                      pw.Container(
+                        padding: const pw.EdgeInsets.all(6),
+                        height: 200,
+                        child: pw.Text('', style: normal),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ],
-          ));
-        } catch (e) {
-          debugPrint('❌ Ошибка при добавлении раздела "$title": $e');
-        }
-      }
-    }
+      ),
+    );
 
-    // ✅ Добавление всех разделов с проверками
-    if (data['outcomes'] != null && data['outcomes'] is List) {
-      safelyAddList('Результаты обучения:', data['outcomes'], 20);
-    }
-
-    if (data['literature'] != null && data['literature'] is List) {
-      safelyAddList('Литература:', data['literature'], 20);
-    }
-
-    if (data['examQuestions'] != null && data['examQuestions'] is List) {
-      safelyAddList('Экзаменационные вопросы:', data['examQuestions'], 20);
-    }
-
-    // 📂 Сохранение PDF
     final dir = await getApplicationDocumentsDirectory();
-    final file = File('${dir.path}/syllabus_${DateTime.now().millisecondsSinceEpoch}.pdf');
+    final file = File('${dir.path}/syllabus_skeleton.pdf');
     await file.writeAsBytes(await pdf.save());
 
-    debugPrint('✅ PDF сохранён: ${file.path}');
+    debugPrint('✅ Каркас PDF сохранён: ${file.path}');
   }
-
 
   Widget _buildSectionTitle(String text) {
     return Padding(
