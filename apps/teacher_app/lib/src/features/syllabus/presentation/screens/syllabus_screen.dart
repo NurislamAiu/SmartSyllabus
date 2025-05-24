@@ -140,35 +140,72 @@ class SyllabusScreen extends StatelessWidget {
 
                       final text = rawText.replaceAll('\n', ' ').replaceAll(RegExp(r'\s+'), ' ');
 
-                      final title = _extractBetween(text, 'по дисциплине', '(код');
-                      final code = _extractBetween(text, 'по дисциплине', 'Программирование')
-                          .split(' ')
+                      String? extract(String start, String end) {
+                        final startIndex = text.indexOf(start);
+                        final endIndex = text.indexOf(end, startIndex + start.length);
+                        if (startIndex != -1 && endIndex != -1) {
+                          return text.substring(startIndex + start.length, endIndex).trim();
+                        }
+                        return '';
+                      }
+
+                      final title = extract('по дисциплине', '(код');
+                      final code = extract('по дисциплине', 'Программирование')
+                          ?.split(' ')
                           .firstWhere((e) => e.startsWith('JP'), orElse: () => '');
 
-                      final program = _extractBetween(text, 'по образовательной программе', 'осенний');
-                      final credits = _extractBetween(text, 'Кол-во кредитов -', 'Всего');
-                      final controlType = _extractBetween(text, 'итогового контроля', 'Лекции').trim().toLowerCase();
-                      final lecturer = _extractBetween(text, 'Лектор', 'e-mail');
-                      final contact = _extractBetween(text, 'e-mail и телефон:', 'Zoom ID');
-                      final goal = _extractBetween(text, 'Целью изучения дисциплины', 'РО');
+                      final program = extract('по образовательной программе', 'осенний');
+                      final credits = extract('Кол-во кредитов -', 'Всего');
+                      final controlType = extract('итогового контроля', 'Лекции')?.toLowerCase();
+                      final lecturer = extract('Лектор', 'e-mail');
+                      final contact = extract('e-mail и телефон:', 'Zoom ID');
+                      final zoom = extract('Zoom ID', 'Ассистент');
+                      final assistant = extract('Ассистент', 'e-mail и телефон:');
+                      final assistantContact = extract('e-mail и телефон:', 'Академическая информация');
 
-                      // 🔍 Универсальный парсинг всех РО (РО10 — ...; РО11 — ...)
+                      var description = extract('Краткое описание дисциплины', 'Результаты обучения (согласно ЕСУВО)');
+                      if (description!.isEmpty) {
+                        description = extract('Краткое описание дисциплины', 'РО');
+                      }
+
+                      final prerequisite = extract('Пререквизиты', 'Постреквизиты');
+                      final postrequisite = extract('Постреквизиты', 'Литература');
+
+                      final resources = extract('Интернет ресурсы', 'Программное обеспечение');
+                      final software = extract('Программное обеспечение', 'Политика дисциплины');
+
+                      final policy = extract('Политика дисциплины', 'Политика оценивания');
+                      final assessment = extract('Политика оценивания', 'ТЕМАТИЧЕСКИЙ ПЛАН');
+
+                      final topicsPlan = extract('ТЕМАТИЧЕСКИЙ ПЛАН', 'Экзаменационные вопросы');
+
                       final outcomes = RegExp(r'(РО\d{1,2})\s*[-–—]\s*(.*?)(?=(РО\d{1,2})|$)', dotAll: true)
                           .allMatches(text)
                           .map((match) => '${match.group(1)} — ${match.group(2)?.trim()}')
                           .toList();
 
-                      // 📚 Литература
                       final litStart = text.indexOf('Литература');
                       final litEnd = text.indexOf('Интернет ресурсы');
-                      final literature = litStart != -1 && litEnd != -1
-                          ? RegExp(r'\d+\.\s(.*?)\s(?=\d+\.\s|Интернет ресурсы|$)', dotAll: true)
-                          .allMatches(text.substring(litStart, litEnd))
-                          .map((m) => m.group(1)!.trim())
-                          .toList()
-                          : [];
 
-                      // ❓ Вопросы
+                      String rawBlock = '';
+                      if (litStart != -1 && litEnd != -1) {
+                        rawBlock = text.substring(litStart, litEnd);
+                      }
+
+// Удаление всех переносов и объединение в одну строку
+                      final cleanedBlock = rawBlock
+                          .replaceAll(RegExp(r'[\u00AD\u2028\r\n\t]+'), ' ')
+                          .replaceAll(RegExp(r'\s+'), ' ')
+                          .trim();
+
+// Разделение по шаблону 1. ..., 2. ..., 3. ...
+                      final literature = RegExp(r'\d+\.\s+(.*?)(?=(\d+\.\s+|$))', dotAll: true)
+                          .allMatches(cleanedBlock)
+                          .map((m) => m.group(1)!.trim())
+                          .where((e) => e.isNotEmpty)
+                          .toList();
+
+
                       final exStart = text.indexOf('Экзаменационные вопросы');
                       final examQuestions = exStart != -1
                           ? RegExp(r'\d+\.\s(.*?)(?=\d+\.\s|$)', dotAll: true)
@@ -177,40 +214,39 @@ class SyllabusScreen extends StatelessWidget {
                           .toList()
                           : [];
 
-                      print('📄 Название: $title');
-                      print('📄 Код: $code');
-                      print('📄 Программа: $program');
-                      print('📄 Кредиты: $credits');
-                      print('📄 Контроль: $controlType');
-                      print('📄 Преподаватель: $lecturer');
-                      print('📄 Контакт: $contact');
-                      print('📄 Цель: $goal');
-                      print('🧠 Результаты обучения: ${outcomes.length}');
-                      print('📚 Литература: ${literature.length}');
-                      print('❓ Вопросы: ${examQuestions.length}');
+                      GoRouter.of(context).pushNamed(
+                        RouteNames.createSyllabus,
+                        extra: {
+                          'title': title,
+                          'code': code,
+                          'program': program,
+                          'credits': credits?.trim(),
+                          'lecturer': lecturer,
+                          'contact': contact,
+                          'zoom': zoom,
+                          'assistant': assistant,
+                          'assistantContact': assistantContact,
+                          'description': description,
+                          'prerequisite': prerequisite,
+                          'postrequisite': postrequisite,
+                          'resources': resources,
+                          'software': software,
+                          'policy': policy,
+                          'assessment': assessment,
+                          'topicsPlan': topicsPlan,
+                          'controlType': controlType,
+                          'outcomes': outcomes,
+                          'literature': literature,
+                          'examQuestions': examQuestions,
+                        },
 
-                      Future.microtask(() {
-                        GoRouter.of(context).pushNamed(
-                          RouteNames.createSyllabus,
-                          extra: {
-                            'title': title,
-                            'code': code,
-                            'program': program,
-                            'credits': credits.trim(),
-                            'lecturer': lecturer,
-                            'contact': contact,
-                            'controlType': controlType,
-                            'goal': goal,
-                            'outcomes': outcomes,
-                            'literature': literature,
-                            'examQuestions': examQuestions,
-                          },
-                        );
-                      });
+                      );
+                      debugPrint('🔍 RAW TEXT:\\n$rawText');
                     }
                   },
                 gradient: const LinearGradient(
                   colors: [Color(0xFFFF512F), Color(0xFFDD2476)],
+
                 ),
               ),
             ],
