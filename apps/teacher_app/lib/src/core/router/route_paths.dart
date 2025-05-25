@@ -6,4 +6,5 @@ class RoutePaths {
   static const literature = '/literature';
   static const evaluation = '/evaluation';
   static const createSyllabus = '/createSyllabus';
+  static const aiCreateSyllabus = '/aiCreateSyllabus';
 }

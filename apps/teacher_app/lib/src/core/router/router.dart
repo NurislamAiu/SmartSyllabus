@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:teacher_app/src/features/syllabus/presentation/screens/create_syllabus_screen.dart';
 
+import '../../features/syllabus/presentation/screens/ai_generated_syllabus_screen.dart';
 import 'route_names.dart';
 import 'route_paths.dart';
 
@@ -23,83 +24,109 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: RoutePaths.home,
           name: RouteNames.home,
-          pageBuilder: (context, state) => NoTransitionPage(
-            key: state.pageKey,
-            child: HomeScreen(),
-          ),
+          pageBuilder:
+              (context, state) =>
+                  NoTransitionPage(key: state.pageKey, child: HomeScreen()),
         ),
         GoRoute(
           path: RoutePaths.syllabus,
           name: RouteNames.syllabus,
-          pageBuilder: (context, state) => NoTransitionPage(
-            key: state.pageKey,
-            child: const SyllabusScreen(),
-          ),
+          pageBuilder:
+              (context, state) => NoTransitionPage(
+                key: state.pageKey,
+                child: const SyllabusScreen(),
+              ),
         ),
         GoRoute(
           path: RoutePaths.exam,
           name: RouteNames.exam,
-          pageBuilder: (context, state) => NoTransitionPage(
-            key: state.pageKey,
-            child: const ExamScreen(),
-          ),
+          pageBuilder:
+              (context, state) => NoTransitionPage(
+                key: state.pageKey,
+                child: const ExamScreen(),
+              ),
         ),
         GoRoute(
           path: RoutePaths.profile,
           name: RouteNames.profile,
-          pageBuilder: (context, state) => NoTransitionPage(
-            key: state.pageKey,
-            child: const ProfileScreen(),
-          ),
+          pageBuilder:
+              (context, state) => NoTransitionPage(
+                key: state.pageKey,
+                child: const ProfileScreen(),
+              ),
         ),
         GoRoute(
           path: RoutePaths.literature,
           name: RouteNames.literature,
-          pageBuilder: (context, state) => NoTransitionPage(
-            key: state.pageKey,
-            child: const LiteratureScreen(),
-          ),
+          pageBuilder:
+              (context, state) => NoTransitionPage(
+                key: state.pageKey,
+                child: const LiteratureScreen(),
+              ),
         ),
         GoRoute(
           path: RoutePaths.evaluation,
           name: RouteNames.evaluation,
-          pageBuilder: (context, state) => NoTransitionPage(
-            key: state.pageKey,
-            child: const EvaluationScreen(),
-          ),
+          pageBuilder:
+              (context, state) => NoTransitionPage(
+                key: state.pageKey,
+                child: const EvaluationScreen(),
+              ),
         ),
         GoRoute(
           path: RoutePaths.createSyllabus,
           name: RouteNames.createSyllabus,
-          pageBuilder: (context, state) => NoTransitionPage(
-            key: state.pageKey,
-            child: const CreateSyllabusScreen(),
-          ),
+          pageBuilder:
+              (context, state) => NoTransitionPage(
+                key: state.pageKey,
+                child: const CreateSyllabusScreen(),
+              ),
+        ),
+        GoRoute(
+          path: RoutePaths.aiCreateSyllabus,
+          name: RouteNames.aiCreateSyllabus,
+          pageBuilder:
+              (context, state) => NoTransitionPage(
+                key: state.pageKey,
+                child: const AIGeneratedSyllabusScreen(),
+              ),
         ),
       ],
     ),
   ],
 );
 
-
 class TeacherScaffold extends StatelessWidget {
   final Widget child;
+
   const TeacherScaffold({Key? key, required this.child}) : super(key: key);
 
   static const _tabs = <Map<String, Object>>[
-    {'label': 'Главная',   'icon': Icons.home,          'path': RoutePaths.home},
-    {'label': 'Силлабусы', 'icon': Icons.menu_book,     'path': RoutePaths.syllabus},
-    {'label': 'Экзамен',    'icon': Icons.assignment,    'path': RoutePaths.exam},
-    {'label': 'Профиль',    'icon': Icons.person,        'path': RoutePaths.profile},
-    {'label': 'Литература', 'icon': Icons.library_books, 'path': RoutePaths.literature},
-    {'label': 'Оценка',     'icon': Icons.rate_review,   'path': RoutePaths.evaluation},
+    {'label': 'Главная', 'icon': Icons.home, 'path': RoutePaths.home},
+    {
+      'label': 'Силлабусы',
+      'icon': Icons.menu_book,
+      'path': RoutePaths.syllabus,
+    },
+    {'label': 'Экзамен', 'icon': Icons.assignment, 'path': RoutePaths.exam},
+    {'label': 'Профиль', 'icon': Icons.person, 'path': RoutePaths.profile},
+    {
+      'label': 'Литература',
+      'icon': Icons.library_books,
+      'path': RoutePaths.literature,
+    },
+    {
+      'label': 'Оценка',
+      'icon': Icons.rate_review,
+      'path': RoutePaths.evaluation,
+    },
   ];
 
   @override
   Widget build(BuildContext context) {
     final location = GoRouterState.of(context).uri.toString();
     var currentIndex = _tabs.indexWhere(
-          (t) => location.startsWith(t['path'] as String),
+      (t) => location.startsWith(t['path'] as String),
     );
     if (currentIndex == -1) currentIndex = 0;
 
@@ -117,7 +144,6 @@ class TeacherScaffold extends StatelessWidget {
     );
   }
 }
-
 
 class SideMenu extends StatefulWidget {
   final List<Map<String, Object>> tabs;
@@ -168,7 +194,11 @@ class _SideMenuState extends State<SideMenu> {
             const SizedBox(height: 12),
             const Text(
               'SmartSyllabus',
-              style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 32),
             for (var i = 0; i < widget.tabs.length; i++)
@@ -209,11 +239,12 @@ class _NavItemState extends State<_NavItem> {
 
   @override
   Widget build(BuildContext context) {
-    final bg = widget.selected
-        ? Colors.white24
-        : _hover
-        ? Colors.white10
-        : Colors.transparent;
+    final bg =
+        widget.selected
+            ? Colors.white24
+            : _hover
+            ? Colors.white10
+            : Colors.transparent;
     final color = widget.selected || _hover ? Colors.white : Colors.white70;
 
     return MouseRegion(
@@ -224,12 +255,22 @@ class _NavItemState extends State<_NavItem> {
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(16)),
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(16),
+          ),
           child: Row(
             children: [
               Icon(widget.icon, color: color),
               const SizedBox(width: 12),
-              Text(widget.label, style: TextStyle(color: color, fontWeight: widget.selected ? FontWeight.bold : FontWeight.normal)),
+              Text(
+                widget.label,
+                style: TextStyle(
+                  color: color,
+                  fontWeight:
+                      widget.selected ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
             ],
           ),
         ),

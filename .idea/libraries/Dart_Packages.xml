@@ -163,6 +163,13 @@
             </list>
           </value>
         </entry>
+        <entry key="flutter_dotenv">
+          <value>
+            <list>
+              <option value="$USER_HOME$/.pub-cache/hosted/pub.dev/flutter_dotenv-5.2.1/lib" />
+            </list>
+          </value>
+        </entry>
         <entry key="flutter_lints">
           <value>
             <list>
@@ -692,6 +699,7 @@
       <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/file-7.0.1/lib" />
       <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/file_picker-10.1.9/lib" />
       <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/fl_chart-1.0.0/lib" />
+      <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/flutter_dotenv-5.2.1/lib" />
       <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/flutter_lints-5.0.0/lib" />
       <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/flutter_plugin_android_lifecycle-2.0.28/lib" />
       <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/flutter_svg-2.1.0/lib" />

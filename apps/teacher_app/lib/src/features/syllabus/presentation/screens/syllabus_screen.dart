@@ -1,68 +1,22 @@
 import 'dart:io';
-
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
 import 'package:teacher_app/src/core/router/route_names.dart';
-
 import '../../../../core/router/route_paths.dart';
+import '../../data/mock_syllabus_repository.dart';
+import '../../data/syllabus.dart'; // Добавь импорт, если нужен SyllabusAI
 
-class Syllabus {
-  final String title;
-  final String description;
-  final DateTime createdAt;
-  final String status; // approved, pending, draft
-  final bool isAI;
-
-  Syllabus({
-    required this.title,
-    required this.description,
-    required this.createdAt,
-    required this.status,
-    this.isAI = false,
-  });
-}
-
-String _extractBetween(String text, String start, String end) {
-  try {
-    final startIndex = text.indexOf(start);
-    final endIndex = text.indexOf(end, startIndex + start.length);
-    if (startIndex == -1 || endIndex == -1) return '';
-    return text.substring(startIndex + start.length, endIndex).trim();
-  } catch (_) {
-    return '';
-  }
-}
-
-final List<Syllabus> mockSyllabusList = [
-  Syllabus(
-    title: 'Информатика 1 курс',
-    description: 'Цифровая грамотность и основы программирования',
-    createdAt: DateTime(2024, 9, 1),
-    status: 'approved',
-    isAI: false,
-  ),
-  Syllabus(
-    title: 'История Казахстана',
-    description: 'Хронология, ключевые события и личности',
-    createdAt: DateTime(2024, 9, 5),
-    status: 'pending',
-    isAI: true,
-  ),
-  Syllabus(
-    title: 'Педагогика',
-    description: 'Методы преподавания и психология обучения',
-    createdAt: DateTime(2024, 9, 8),
-    status: 'draft',
-    isAI: false,
-  ),
-];
-
-class SyllabusScreen extends StatelessWidget {
+class SyllabusScreen extends StatefulWidget {
   const SyllabusScreen({super.key});
 
+  @override
+  State<SyllabusScreen> createState() => _SyllabusScreenState();
+}
+
+class _SyllabusScreenState extends State<SyllabusScreen> {
   void _showCreateDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -75,179 +29,145 @@ class SyllabusScreen extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Заголовок
               Text(
                 'Создать силабус',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 24),
-
-              // AI
               _CreateOptionCard(
                 icon: Icons.smart_toy,
                 title: 'Сгенерировать с помощью AI',
                 subtitle: 'Автоматически создать структуру силабуса',
-                onTap: () {
-                  Navigator.pop(context);
+                onTap: () async {
+                  Navigator.of(context, rootNavigator: true).pop();
+
+                  final newSyllabus = await GoRouter.of(context).push<SyllabusAI>(
+                    RoutePaths.aiCreateSyllabus,
+                  );
+
+                  if (newSyllabus != null) {
+                    setState(() {
+                      mockSyllabusList.insert(0, newSyllabus);
+                    });
+                  }
                 },
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF6A11CB), Color(0xFF2575FC)],
-                ),
+                gradient: const LinearGradient(colors: [Color(0xFF6A11CB), Color(0xFF2575FC)]),
               ),
               const SizedBox(height: 12),
-
-              // Вручную
               _CreateOptionCard(
                 icon: Icons.edit,
                 title: 'Создать вручную',
                 subtitle: 'Ввести все поля самостоятельно',
                 onTap: () {
-                  // Закрыть диалог из самого "корневого" контекста
                   Navigator.of(context, rootNavigator: true).pop();
-
-                  // Навигация — немного позже
-                  Future.delayed(Duration.zero, () {
-                    GoRouter.of(context).push(RoutePaths.createSyllabus);
-                  });
+                  GoRouter.of(context).push(RoutePaths.createSyllabus);
                 },
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF43CEA2), Color(0xFF185A9D)],
-                ),
+                gradient: const LinearGradient(colors: [Color(0xFF43CEA2), Color(0xFF185A9D)]),
               ),
               const SizedBox(height: 12),
-
-              // Импорт
               _CreateOptionCard(
                 icon: Icons.upload_file,
                 title: 'Импортировать из файла',
                 subtitle: 'Загрузить готовый силабус',
-                  onTap: () async {
-                    Navigator.of(context, rootNavigator: true).pop();
+                onTap: () async {
+                  Navigator.of(context, rootNavigator: true).pop();
+                  final result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['pdf']);
+                  if (result != null && result.files.single.path != null) {
+                    final file = File(result.files.single.path!);
+                    final bytes = await file.readAsBytes();
+                    final document = PdfDocument(inputBytes: bytes);
+                    final rawText = PdfTextExtractor(document).extractText();
+                    document.dispose();
 
-                    final result = await FilePicker.platform.pickFiles(
-                      type: FileType.custom,
-                      allowedExtensions: ['pdf'],
-                    );
+                    final text = rawText.replaceAll('\n', ' ').replaceAll(RegExp(r'\s+'), ' ');
 
-                    if (result != null && result.files.single.path != null) {
-                      final file = File(result.files.single.path!);
-                      final bytes = await file.readAsBytes();
-                      final document = PdfDocument(inputBytes: bytes);
-                      final rawText = PdfTextExtractor(document).extractText();
-                      document.dispose();
-
-                      final text = rawText.replaceAll('\n', ' ').replaceAll(RegExp(r'\s+'), ' ');
-
-                      String? extract(String start, String end) {
-                        final startIndex = text.indexOf(start);
-                        final endIndex = text.indexOf(end, startIndex + start.length);
-                        if (startIndex != -1 && endIndex != -1) {
-                          return text.substring(startIndex + start.length, endIndex).trim();
-                        }
-                        return '';
+                    String? extract(String start, String end) {
+                      final startIndex = text.indexOf(start);
+                      final endIndex = text.indexOf(end, startIndex + start.length);
+                      if (startIndex != -1 && endIndex != -1) {
+                        return text.substring(startIndex + start.length, endIndex).trim();
                       }
-
-                      final title = extract('по дисциплине', '(код');
-                      final code = extract('по дисциплине', 'Программирование')
-                          ?.split(' ')
-                          .firstWhere((e) => e.startsWith('JP'), orElse: () => '');
-
-                      final program = extract('по образовательной программе', 'осенний');
-                      final credits = extract('Кол-во кредитов -', 'Всего');
-                      final controlType = extract('итогового контроля', 'Лекции')?.toLowerCase();
-                      final lecturer = extract('Лектор', 'e-mail');
-                      final contact = extract('e-mail и телефон:', 'Zoom ID');
-                      final zoom = extract('Zoom ID', 'Ассистент');
-                      final assistant = extract('Ассистент', 'e-mail и телефон:');
-                      final assistantContact = extract('e-mail и телефон:', 'Академическая информация');
-
-                      var description = extract('Краткое описание дисциплины', 'Результаты обучения (согласно ЕСУВО)');
-                      if (description!.isEmpty) {
-                        description = extract('Краткое описание дисциплины', 'РО');
-                      }
-
-                      final prerequisite = extract('Пререквизиты', 'Постреквизиты');
-                      final postrequisite = extract('Постреквизиты', 'Литература');
-
-                      final resources = extract('Интернет ресурсы', 'Программное обеспечение');
-                      final software = extract('Программное обеспечение', 'Политика дисциплины');
-
-                      final policy = extract('Политика дисциплины', 'Политика оценивания');
-                      final assessment = extract('Политика оценивания', 'ТЕМАТИЧЕСКИЙ ПЛАН');
-
-                      final topicsPlan = extract('ТЕМАТИЧЕСКИЙ ПЛАН', 'Экзаменационные вопросы');
-
-                      final outcomes = RegExp(r'(РО\d{1,2})\s*[-–—]\s*(.*?)(?=(РО\d{1,2})|$)', dotAll: true)
-                          .allMatches(text)
-                          .map((match) => '${match.group(1)} — ${match.group(2)?.trim()}')
-                          .toList();
-
-                      final litStart = text.indexOf('Литература');
-                      final litEnd = text.indexOf('Интернет ресурсы');
-
-                      String rawBlock = '';
-                      if (litStart != -1 && litEnd != -1) {
-                        rawBlock = text.substring(litStart, litEnd);
-                      }
-
-// Удаление всех переносов и объединение в одну строку
-                      final cleanedBlock = rawBlock
-                          .replaceAll(RegExp(r'[\u00AD\u2028\r\n\t]+'), ' ')
-                          .replaceAll(RegExp(r'\s+'), ' ')
-                          .trim();
-
-// Разделение по шаблону 1. ..., 2. ..., 3. ...
-                      final literature = RegExp(r'\d+\.\s+(.*?)(?=(\d+\.\s+|$))', dotAll: true)
-                          .allMatches(cleanedBlock)
-                          .map((m) => m.group(1)!.trim())
-                          .where((e) => e.isNotEmpty)
-                          .toList();
-
-
-                      final exStart = text.indexOf('Экзаменационные вопросы');
-                      final examQuestions = exStart != -1
-                          ? RegExp(r'\d+\.\s(.*?)(?=\d+\.\s|$)', dotAll: true)
-                          .allMatches(text.substring(exStart))
-                          .map((m) => m.group(1)!.trim())
-                          .toList()
-                          : [];
-
-                      GoRouter.of(context).pushNamed(
-                        RouteNames.createSyllabus,
-                        extra: {
-                          'title': title,
-                          'code': code,
-                          'program': program,
-                          'credits': credits?.trim(),
-                          'lecturer': lecturer,
-                          'contact': contact,
-                          'zoom': zoom,
-                          'assistant': assistant,
-                          'assistantContact': assistantContact,
-                          'description': description,
-                          'prerequisite': prerequisite,
-                          'postrequisite': postrequisite,
-                          'resources': resources,
-                          'software': software,
-                          'policy': policy,
-                          'assessment': assessment,
-                          'topicsPlan': topicsPlan,
-                          'controlType': controlType,
-                          'outcomes': outcomes,
-                          'literature': literature,
-                          'examQuestions': examQuestions,
-                        },
-
-                      );
-                      debugPrint('🔍 RAW TEXT:\\n$rawText');
+                      return '';
                     }
-                  },
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFFF512F), Color(0xFFDD2476)],
 
-                ),
+                    final title = extract('по дисциплине', '(код');
+                    final code = extract('по дисциплине', 'Программирование')?.split(' ').firstWhere((e) => e.startsWith('JP'), orElse: () => '');
+                    final program = extract('по образовательной программе', 'осенний');
+                    final credits = extract('Кол-во кредитов -', 'Всего');
+                    final controlType = extract('итогового контроля', 'Лекции')?.toLowerCase();
+                    final lecturer = extract('Лектор', 'e-mail');
+                    final contact = extract('e-mail и телефон:', 'Zoom ID');
+                    final zoom = extract('Zoom ID', 'Ассистент');
+                    final assistant = extract('Ассистент', 'e-mail и телефон:');
+                    final assistantContact = extract('e-mail и телефон:', 'Академическая информация');
+
+                    var description = extract('Краткое описание дисциплины', 'Результаты обучения (согласно ЕСУВО)');
+                    if (description!.isEmpty) {
+                      description = extract('Краткое описание дисциплины', 'РО');
+                    }
+
+                    final prerequisite = extract('Пререквизиты', 'Постреквизиты');
+                    final postrequisite = extract('Постреквизиты', 'Литература');
+                    final resources = extract('Интернет ресурсы', 'Программное обеспечение');
+                    final software = extract('Программное обеспечение', 'Политика дисциплины');
+                    final policy = extract('Политика дисциплины', 'Политика оценивания');
+                    final assessment = extract('Политика оценивания', 'ТЕМАТИЧЕСКИЙ ПЛАН');
+                    final topicsPlan = extract('ТЕМАТИЧЕСКИЙ ПЛАН', 'Экзаменационные вопросы');
+
+                    final outcomes = RegExp(r'(РО\d{1,2})\s*[-–—]\s*(.*?)(?=(РО\d{1,2})|$)', dotAll: true)
+                        .allMatches(text)
+                        .map((match) => '${match.group(1)} — ${match.group(2)?.trim()}')
+                        .toList();
+
+                    final litStart = text.indexOf('Литература');
+                    final litEnd = text.indexOf('Интернет ресурсы');
+                    String rawBlock = '';
+                    if (litStart != -1 && litEnd != -1) {
+                      rawBlock = text.substring(litStart, litEnd);
+                    }
+
+                    final cleanedBlock = rawBlock.replaceAll(RegExp(r'[\u00AD\u2028\r\n\t]+'), ' ').replaceAll(RegExp(r'\s+'), ' ').trim();
+                    final literature = RegExp(r'\d+\.\s+(.*?)(?=(\d+\.\s+|$))', dotAll: true)
+                        .allMatches(cleanedBlock)
+                        .map((m) => m.group(1)!.trim())
+                        .where((e) => e.isNotEmpty)
+                        .toList();
+
+                    final exStart = text.indexOf('Экзаменационные вопросы');
+                    final examQuestions = exStart != -1
+                        ? RegExp(r'\d+\.\s(.*?)(?=\d+\.\s|$)', dotAll: true).allMatches(text.substring(exStart)).map((m) => m.group(1)!.trim()).toList()
+                        : [];
+
+                    GoRouter.of(context).pushNamed(
+                      RouteNames.createSyllabus,
+                      extra: {
+                        'title': title,
+                        'code': code,
+                        'program': program,
+                        'credits': credits?.trim(),
+                        'lecturer': lecturer,
+                        'contact': contact,
+                        'zoom': zoom,
+                        'assistant': assistant,
+                        'assistantContact': assistantContact,
+                        'description': description,
+                        'prerequisite': prerequisite,
+                        'postrequisite': postrequisite,
+                        'resources': resources,
+                        'software': software,
+                        'policy': policy,
+                        'assessment': assessment,
+                        'topicsPlan': topicsPlan,
+                        'controlType': controlType,
+                        'outcomes': outcomes,
+                        'literature': literature,
+                        'examQuestions': examQuestions,
+                      },
+                    );
+                    debugPrint('🔍 RAW TEXT:\n$rawText');
+                  }
+                },
+                gradient: const LinearGradient(colors: [Color(0xFFFF512F), Color(0xFFDD2476)]),
               ),
             ],
           ),
@@ -259,7 +179,6 @@ class SyllabusScreen extends StatelessWidget {
   Widget _buildStatusChip(String status, bool isAI) {
     Color color;
     String label;
-
     switch (status) {
       case 'approved':
         color = Colors.green;
@@ -286,11 +205,10 @@ class SyllabusScreen extends StatelessWidget {
           backgroundColor: color.withOpacity(0.1),
           labelStyle: TextStyle(color: color),
         ),
-        if (isAI)
-          const Padding(
-            padding: EdgeInsets.only(left: 6),
-            child: Icon(Icons.smart_toy, size: 18, color: Colors.deepPurple),
-          ),
+        if (isAI) const Padding(
+          padding: EdgeInsets.only(left: 6),
+          child: Icon(Icons.smart_toy, size: 18, color: Colors.deepPurple),
+        ),
       ],
     );
   }
@@ -305,74 +223,32 @@ class SyllabusScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Заголовок и кнопка
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Syllabus',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
+              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                Text('Syllabus', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
+                GestureDetector(
+                  onTap: () => _showCreateDialog(context),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(colors: [Color(0xFF3F3F8F), Color(0xFF5A5AD6)]),
+                      borderRadius: BorderRadius.circular(30),
+                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 8, offset: const Offset(0, 4))],
                     ),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: const [
+                      Icon(Icons.add, color: Colors.white),
+                      SizedBox(width: 8),
+                      Text('Создать силабус', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 16)),
+                    ]),
                   ),
-                  GestureDetector(
-                    onTap: () => _showCreateDialog(context),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF3F3F8F), Color(0xFF5A5AD6)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(30),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.15),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: const [
-                          Icon(Icons.add, color: Colors.white),
-                          SizedBox(width: 8),
-                          Text(
-                            'Создать силабус',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 32),
-
-              // Подзаголовок
-              Text(
-                'Мои силабусы',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w600,
                 ),
-              ),
+              ]),
+              const SizedBox(height: 32),
+              Text('Мои силабусы', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600)),
               const SizedBox(height: 16),
-
-              // Список силабусов
               ...mockSyllabusList.map((syllabus) {
                 final dateStr = DateFormat('dd MMM yyyy', 'ru').format(syllabus.createdAt);
-
                 return InkWell(
-                  onTap: () {
-                    // TODO: переход к деталям силабуса
-                    debugPrint('Открыть: ${syllabus.title}');
-                  },
+                  onTap: () => debugPrint('Открыть: ${syllabus.title}'),
                   borderRadius: BorderRadius.circular(16),
                   child: Container(
                     margin: const EdgeInsets.only(bottom: 16),
@@ -380,61 +256,31 @@ class SyllabusScreen extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
+                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Иконка / статус
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: syllabus.isAI ? Colors.deepPurple.withOpacity(0.1) : Colors.blueGrey.withOpacity(0.1),
                           ),
-                          child: Icon(
-                            syllabus.isAI ? Icons.smart_toy : Icons.menu_book,
-                            color: syllabus.isAI ? Colors.deepPurple : Colors.blueGrey,
-                            size: 24,
-                          ),
+                          child: Icon(syllabus.isAI ? Icons.smart_toy : Icons.menu_book, color: syllabus.isAI ? Colors.deepPurple : Colors.blueGrey, size: 24),
                         ),
                         const SizedBox(width: 16),
-
-                        // Контент
                         Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                syllabus.title,
-                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                syllabus.description,
-                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[800]),
-                              ),
-                              const SizedBox(height: 12),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  _buildStatusChip(syllabus.status, syllabus.isAI),
-                                  Text(
-                                    'Создан: $dateStr',
-                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
+                          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                            Text(syllabus.title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 6),
+                            Text(syllabus.description, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[800])),
+                            const SizedBox(height: 12),
+                            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                              _buildStatusChip(syllabus.status, syllabus.isAI),
+                              Text('Создан: $dateStr', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[600])),
+                            ]),
+                          ]),
                         ),
                       ],
                     ),
@@ -475,44 +321,24 @@ class _CreateOptionCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           color: Colors.grey[50],
           boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 6,
-              offset: const Offset(0, 4),
-            ),
+            BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 6, offset: const Offset(0, 4)),
           ],
         ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: gradient,
-              ),
-              child: Icon(icon, color: Colors.white, size: 24),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title,
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleMedium
-                          ?.copyWith(fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 4),
-                  Text(subtitle,
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.copyWith(color: Colors.grey[700])),
-                ],
-              ),
-            )
-          ],
-        ),
+        child: Row(children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(shape: BoxShape.circle, gradient: gradient),
+            child: Icon(icon, color: Colors.white, size: 24),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+              const SizedBox(height: 4),
+              Text(subtitle, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[700])),
+            ]),
+          ),
+        ]),
       ),
     );
   }
