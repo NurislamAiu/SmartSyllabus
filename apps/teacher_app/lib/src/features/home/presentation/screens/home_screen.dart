@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../../../home/data/datasources/mock/home_mock_datasource.dart';
-import '../../../home/data/datasources/mock/news_mock_datasource.dart';
-import '../../../home/data/datasources/mock/notification_mock_datasource.dart';
 import '../../data/datasources/home_datasource.dart';
 import '../../data/datasources/news_datasource.dart';
 import '../../data/datasources/notification_datasource.dart';
@@ -22,9 +19,9 @@ class HomeScreen extends StatefulWidget {
     HomeDataSource? syllabusSource,
     NewsDataSource? newsSource,
     NotificationDataSource? notificationSource,
-  }) : syllabusSource = syllabusSource ?? HomeMockDataSource(),
-        newsSource = newsSource ?? NewsMockDataSource(),
-        notificationSource = notificationSource ?? NotificationMockDataSource();
+  }) : syllabusSource = syllabusSource ?? HomeRemoteDataSource(),
+        newsSource = newsSource ?? NewsRemoteDataSource(),
+        notificationSource = notificationSource ?? NotificationRemoteDataSource();
 
   final HomeDataSource syllabusSource;
   final NewsDataSource newsSource;
@@ -41,13 +38,13 @@ class _HomeScreenState extends State<HomeScreen> {
   int total = 0, pending = 0, approved = 0, rejected = 0;
   late List<Instruction> _instructions;
   late List<NewsItem> _newsItems;
-  late List<NotificationItem> _notifications; // 🔥 [NEW]
+  late List<NotificationItem> _notifications;
 
   @override
   void initState() {
     super.initState();
     _instructions = getInstructions();
-    _notifications = []; // 🔥 [NEW]
+    _notifications = []; //
     _loadData();
   }
 
@@ -60,7 +57,7 @@ class _HomeScreenState extends State<HomeScreen> {
     ]);
 
     final news = await widget.newsSource.fetchLatest(limit: 2);
-    final notifs = await widget.notificationSource.fetchUnread(limit: 10); // 🔥 [NEW]
+    final notifs = await widget.notificationSource.fetchUnread(limit: 10);
 
     setState(() {
       total = counts[0];
@@ -68,7 +65,7 @@ class _HomeScreenState extends State<HomeScreen> {
       approved = counts[2];
       rejected = counts[3];
       _newsItems = news;
-      _notifications = notifs; // 🔥 [NEW]
+      _notifications = notifs; //
       _loading = false;
     });
   }
@@ -245,8 +242,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text('Уведомления',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    const Text(
+                      'Уведомления',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
                     const SizedBox(height: 12),
                     Expanded(
                       child: _notifications.isEmpty
@@ -258,10 +257,19 @@ class _HomeScreenState extends State<HomeScreen> {
                           final notif = _notifications[index];
                           return ListTile(
                             leading: const Icon(Icons.notifications, color: Colors.blue),
-                            title: Text(notif.title),
-                            subtitle: Text(notif.message),
+                            title: Text(
+                              notif.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontWeight: FontWeight.w600),
+                            ),
+                            subtitle: Text(
+                              notif.message,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                             trailing: Text(
-                              DateFormat('HH:mm').format(notif.createdAt),
+                              notif.createdAt.substring(11, 16),
                               style: const TextStyle(fontSize: 12, color: Colors.grey),
                             ),
                           );

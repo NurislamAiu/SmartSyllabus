@@ -1,4 +1,5 @@
 enum SyllabusStatus {
+  total,
   pending,
   approved,
   rejected,

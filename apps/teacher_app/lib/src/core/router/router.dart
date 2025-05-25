@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:teacher_app/src/features/syllabus/presentation/screens/create_syllabus_screen.dart';
 
+import '../../features/exam/presentation/screens/ai_generated_exam_screen.dart';
 import '../../features/exam/presentation/screens/manual_exam_form.dart';
 import '../../features/syllabus/presentation/screens/ai_generated_syllabus_screen.dart';
 import 'route_names.dart';
@@ -53,7 +54,7 @@ final GoRouter appRouter = GoRouter(
           pageBuilder:
               (context, state) => NoTransitionPage(
                 key: state.pageKey,
-                child: const ExamScreen(),
+                child: const AIGeneratedExamScreen(),
               ),
         ),
         GoRoute(
@@ -133,11 +134,6 @@ class TeacherScaffold extends StatelessWidget {
       'label': 'Литература',
       'icon': Icons.library_books,
       'path': RoutePaths.literature,
-    },
-    {
-      'label': 'Оценка',
-      'icon': Icons.rate_review,
-      'path': RoutePaths.evaluation,
     },
   ];
 

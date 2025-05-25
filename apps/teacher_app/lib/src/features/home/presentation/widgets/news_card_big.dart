@@ -17,7 +17,19 @@ class NewsCardBig extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            Image.asset(item.imageUrl, fit: BoxFit.cover),
+            item.imageUrl.isNotEmpty
+                ? Image.network(
+              item.imageUrl,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => Container(
+                color: Colors.grey[300],
+                child: const Center(child: Icon(Icons.image_not_supported)),
+              ),
+            )
+                : Container(
+              color: Colors.grey[200],
+              child: const Center(child: Icon(Icons.image)),
+            ),
             Container(color: Colors.black.withOpacity(0.4)),
             Positioned(
               top: 16,
@@ -36,7 +48,7 @@ class NewsCardBig extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    dateFmt.format(item.publishedAt),
+                    dateFmt.format(DateTime.parse(item.date)),
                     style: TextStyle(
                       color: Colors.white,
                       shadows: [Shadow(color: Colors.black45, blurRadius: 4)],

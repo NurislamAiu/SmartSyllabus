@@ -6,17 +6,25 @@ import '../../data/exam_model.dart';
 import '../widgets/exam_card.dart';
 import '../../../../core/router/route_names.dart';
 
-class ExamScreen extends StatelessWidget {
+class ExamScreen extends StatefulWidget {
   const ExamScreen({super.key});
 
+  @override
+  State<ExamScreen> createState() => _ExamScreenState();
+}
+
+class _ExamScreenState extends State<ExamScreen> {
   static const Color primaryColor = Color(0xFF3F3F8F);
 
   void _openManualExamForm(BuildContext context) {
     context.pushNamed(RouteNames.manualExamForm);
   }
 
-  void _openAIGeneratedExam(BuildContext context) {
-    context.pushNamed(RouteNames.aiGeneratedExam);
+  void _openAIGeneratedExam(BuildContext context) async {
+    final result = await context.pushNamed(RouteNames.aiGeneratedExam) as ExamModel?;
+    if (result != null) {
+      setState(() => mockExamList.insert(0, result)); // 👈 добавляем сразу
+    }
   }
 
   @override
@@ -96,6 +104,7 @@ class ExamScreen extends StatelessWidget {
       ),
     );
   }
+
   void _showCreateDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -115,8 +124,6 @@ class ExamScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 24),
-
-              // AI создание
               CreateOptionCard(
                 icon: Icons.smart_toy,
                 title: 'Сгенерировать с помощью AI',
@@ -129,10 +136,7 @@ class ExamScreen extends StatelessWidget {
                   colors: [Color(0xFF6A11CB), Color(0xFF2575FC)],
                 ),
               ),
-
               const SizedBox(height: 12),
-
-              // Вручную
               CreateOptionCard(
                 icon: Icons.edit_note,
                 title: 'Создать вручную',

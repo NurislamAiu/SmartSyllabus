@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import '../screens/instruction_detail_screen.dart';
 
 class Instruction {
   final String title;
@@ -24,26 +25,36 @@ class InstructionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      shape: RoundedRectangleBorder(
-        side: const BorderSide(color: Colors.black12),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Stack(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Text(
-              ins.title,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => InstructionDetailScreen(instruction: ins),
+          ),
+        );
+      },
+      child: Card(
+        shape: RoundedRectangleBorder(
+          side: const BorderSide(color: Colors.black12),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Text(
+                ins.title,
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              ),
             ),
-          ),
-          Positioned(
-            bottom: 5,
-            right: 5,
-            child: SvgPicture.asset(ins.asset, height: 90, fit: BoxFit.contain),
-          ),
-        ],
+            Positioned(
+              bottom: 5,
+              right: 5,
+              child: SvgPicture.asset(ins.asset, height: 90, fit: BoxFit.contain),
+            ),
+          ],
+        ),
       ),
     );
   }
