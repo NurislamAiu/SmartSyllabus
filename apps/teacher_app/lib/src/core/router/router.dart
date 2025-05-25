@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:teacher_app/src/features/syllabus/presentation/screens/create_syllabus_screen.dart';
 
+import '../../features/exam/presentation/screens/manual_exam_form.dart';
 import '../../features/syllabus/presentation/screens/ai_generated_syllabus_screen.dart';
 import 'route_names.dart';
 import 'route_paths.dart';
@@ -44,6 +45,24 @@ final GoRouter appRouter = GoRouter(
               (context, state) => NoTransitionPage(
                 key: state.pageKey,
                 child: const ExamScreen(),
+              ),
+        ),
+        GoRoute(
+          path: RoutePaths.aiGeneratedExam,
+          name: RouteNames.aiGeneratedExam,
+          pageBuilder:
+              (context, state) => NoTransitionPage(
+                key: state.pageKey,
+                child: const ExamScreen(),
+              ),
+        ),
+        GoRoute(
+          path: RoutePaths.manualExamForm,
+          name: RouteNames.manualExamForm,
+          pageBuilder:
+              (context, state) => NoTransitionPage(
+                key: state.pageKey,
+                child: const ManualExamForm(),
               ),
         ),
         GoRoute(

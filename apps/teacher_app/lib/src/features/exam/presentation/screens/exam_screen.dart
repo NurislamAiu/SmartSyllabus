@@ -1,126 +1,152 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../../syllabus/presentation/widgets/create_option_card.dart';
+import '../../data/mock_exam_repository.dart';
+import '../../data/exam_model.dart';
+import '../widgets/exam_card.dart';
+import '../../../../core/router/route_names.dart';
 
 class ExamScreen extends StatelessWidget {
   const ExamScreen({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+  static const Color primaryColor = Color(0xFF3F3F8F);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Экзамены и билеты'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              // TODO: Поиск
-            },
-          ),
-        ],
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _ExamCard(
-            title: 'ЕНТ по истории',
-            date: '12.05.2025',
-            type: 'AI',
-            questionCount: 20,
-            status: 'Review',
-            statusColor: Colors.blue,
-            onView: () => context.go('/exam/view/1'),
-            onExport: () {},
-          ),
-          _ExamCard(
-            title: 'Промежуточный тест по биологии',
-            date: '01.05.2025',
-            type: 'Manual',
-            questionCount: 15,
-            status: 'Draft',
-            statusColor: Colors.orange,
-            onView: () => context.go('/exam/edit/2'),
-            onExport: () {},
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: () => context.go('/exam/create'),
-            icon: const Icon(Icons.note_add),
-            label: const Text('Создать экзамен вручную'),
-          ),
-          const SizedBox(height: 12),
-          ElevatedButton.icon(
-            onPressed: () => context.go('/exam/ai-assistant'),
-            icon: const Icon(Icons.smart_toy),
-            label: const Text('Сгенерировать экзамен (ИИ)'),
-          ),
-        ],
-      ),
-    );
+  void _openManualExamForm(BuildContext context) {
+    context.pushNamed(RouteNames.manualExamForm);
   }
-}
 
-class _ExamCard extends StatelessWidget {
-  final String title;
-  final String date;
-  final String type;
-  final int questionCount;
-  final String status;
-  final Color statusColor;
-  final VoidCallback onView;
-  final VoidCallback onExport;
-
-  const _ExamCard({
-    required this.title,
-    required this.date,
-    required this.type,
-    required this.questionCount,
-    required this.status,
-    required this.statusColor,
-    required this.onView,
-    required this.onExport,
-  });
+  void _openAIGeneratedExam(BuildContext context) {
+    context.pushNamed(RouteNames.aiGeneratedExam);
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: ListTile(
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
-        subtitle: Column(
+    return Scaffold(
+      backgroundColor: const Color(0xFFF9F9FB),
+      body: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Тип: $type | Вопросов: $questionCount'),
-            Text('Дата: $date'),
-            Container(
-              margin: const EdgeInsets.only(top: 4),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: statusColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                status,
-                style: TextStyle(
-                  color: statusColor,
-                  fontWeight: FontWeight.w500,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Exams',
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: primaryColor,
+                  ),
                 ),
+                GestureDetector(
+                  onTap: () => _showCreateDialog(context),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF3F3F8F), Color(0xFF5A5AD6)],
+                      ),
+                      borderRadius: BorderRadius.circular(30),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.15),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: const [
+                        Icon(Icons.add, color: Colors.white),
+                        SizedBox(width: 8),
+                        Text(
+                          'Создать экзамен',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 32),
+            Text(
+              'Мои экзамены',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: mockExamList.isEmpty
+                  ? const Center(child: Text('Нет созданных экзаменов'))
+                  : ListView.separated(
+                itemCount: mockExamList.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (context, index) => ExamCard(exam: mockExamList[index]),
               ),
             ),
           ],
         ),
-        trailing: PopupMenuButton(
-          itemBuilder: (context) => [
-            const PopupMenuItem(child: Text('Просмотреть'), value: 'view'),
-            const PopupMenuItem(child: Text('Экспорт'), value: 'export'),
-          ],
-          onSelected: (value) {
-            if (value == 'view') onView();
-            if (value == 'export') onExport();
-          },
+      ),
+    );
+  }
+  void _showCreateDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Создать экзамен',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // AI создание
+              CreateOptionCard(
+                icon: Icons.smart_toy,
+                title: 'Сгенерировать с помощью AI',
+                subtitle: 'Автоматически создать структуру экзамена',
+                onTap: () {
+                  Navigator.of(context, rootNavigator: true).pop();
+                  _openAIGeneratedExam(context);
+                },
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF6A11CB), Color(0xFF2575FC)],
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // Вручную
+              CreateOptionCard(
+                icon: Icons.edit_note,
+                title: 'Создать вручную',
+                subtitle: 'Заполнить данные самостоятельно',
+                onTap: () {
+                  Navigator.of(context, rootNavigator: true).pop();
+                  _openManualExamForm(context);
+                },
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF43CEA2), Color(0xFF185A9D)],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

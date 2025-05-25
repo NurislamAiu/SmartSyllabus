@@ -53,7 +53,7 @@ class AIGeneratedController {
 
     _startPhraseAnimation(onUpdate);
 
-    await Future.delayed(const Duration(seconds: 6)); // симулируем генерацию
+    await Future.delayed(const Duration(seconds: 6));
 
     syllabusData = mockSyllabus;
     isLoading = false;

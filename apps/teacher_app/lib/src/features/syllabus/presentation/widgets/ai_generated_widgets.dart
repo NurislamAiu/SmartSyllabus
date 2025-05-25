@@ -87,7 +87,7 @@ Widget buildSyllabusCard(AIGeneratedController controller, BuildContext context)
             );
 
             Future.delayed(const Duration(milliseconds: 500), () {
-              Navigator.pop(context, newSyllabus);
+              Navigator.of(context).pop<SyllabusAI>(newSyllabus);
             });
           },
           icon: const Icon(Icons.save_alt),
