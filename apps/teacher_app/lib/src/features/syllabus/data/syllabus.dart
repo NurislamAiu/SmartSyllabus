@@ -12,4 +12,14 @@ class SyllabusAI{
     required this.status,
     this.isAI = false,
   });
+
+  factory SyllabusAI.fromJson(Map<String, dynamic> json) {
+    return SyllabusAI(
+      title: json['title'] ?? '',
+      description: json['description'] ?? '',
+      createdAt: DateTime.parse(json['createdAt']),
+      status: json['status'] ?? 'pending',
+    );
+  }
 }
+

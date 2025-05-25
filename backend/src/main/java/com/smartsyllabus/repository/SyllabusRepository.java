@@ -3,34 +3,46 @@ package com.smartsyllabus.repository;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.*;
 import com.google.firebase.cloud.FirestoreClient;
-import com.smartsyllabus.dto.KpiResponse;
+import com.smartsyllabus.dto.SyllabusDto;
 import org.springframework.stereotype.Repository;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 @Repository
 public class SyllabusRepository {
 
-    private final Firestore db = FirestoreClient.getFirestore();
-
-    public KpiResponse fetchKpi() {
+    public List<SyllabusDto> fetchAll() {
+        List<SyllabusDto> result = new ArrayList<>();
         try {
-            int total = getCount(null);
-            int pending = getCount("pending");
-            int approved = getCount("approved");
-            int rejected = getCount("rejected");
+            Firestore db = FirestoreClient.getFirestore();
 
-            return new KpiResponse(total, pending, approved, rejected);
+            ApiFuture<QuerySnapshot> future = db.collection("syllabus")
+                    .orderBy("createdAt", Query.Direction.DESCENDING)
+                    .get();
+
+            List<QueryDocumentSnapshot> docs = future.get().getDocuments();
+
+            for (QueryDocumentSnapshot doc : docs) {
+                Map<String, Object> data = doc.getData();
+
+                String title = (String) data.getOrDefault("title", "Без названия");
+                String description = (String) data.getOrDefault("description", "");
+                String status = (String) data.getOrDefault("status", "pending");
+                String createdAt = "";
+
+                Object createdAtObj = data.get("createdAt");
+                if (createdAtObj instanceof com.google.cloud.Timestamp ts) {
+                    createdAt = ts.toDate().toInstant().toString(); // ISO 8601
+                }
+
+                result.add(new SyllabusDto(title, description, createdAt, status));
+            }
+
         } catch (Exception e) {
             e.printStackTrace();
-            return new KpiResponse(0, 0, 0, 0);
         }
-    }
 
-    private int getCount(String status) throws Exception {
-        CollectionReference ref = db.collection("syllabuses");
-
-        Query query = (status == null) ? ref : ref.whereEqualTo("status", status);
-        ApiFuture<QuerySnapshot> future = query.get();
-
-        return future.get().size();
+        return result;
     }
 }
