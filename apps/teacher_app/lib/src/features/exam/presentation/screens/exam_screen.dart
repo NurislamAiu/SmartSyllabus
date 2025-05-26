@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../syllabus/presentation/widgets/create_option_card.dart';
-import '../../data/mock_exam_repository.dart';
+import '../../data/exam_remote_datasource.dart';
 import '../../data/exam_model.dart';
 import '../widgets/exam_card.dart';
 import '../../../../core/router/route_names.dart';
@@ -15,6 +15,27 @@ class ExamScreen extends StatefulWidget {
 
 class _ExamScreenState extends State<ExamScreen> {
   static const Color primaryColor = Color(0xFF3F3F8F);
+  final _remote = ExamRemoteDataSource();
+  List<ExamModel> _examList = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadExams();
+  }
+
+  Future<void> _loadExams() async {
+    try {
+      final data = await _remote.fetchAll();
+      setState(() {
+        _examList = data;
+        _loading = false;
+      });
+    } catch (e) {
+      print('Ошибка при загрузке: $e');
+    }
+  }
 
   void _openManualExamForm(BuildContext context) {
     context.pushNamed(RouteNames.manualExamForm);
@@ -23,7 +44,7 @@ class _ExamScreenState extends State<ExamScreen> {
   void _openAIGeneratedExam(BuildContext context) async {
     final result = await context.pushNamed(RouteNames.aiGeneratedExam) as ExamModel?;
     if (result != null) {
-      setState(() => mockExamList.insert(0, result)); // 👈 добавляем сразу
+      setState(() => _examList.insert(0, result));
     }
   }
 
@@ -91,12 +112,14 @@ class _ExamScreenState extends State<ExamScreen> {
             ),
             const SizedBox(height: 16),
             Expanded(
-              child: mockExamList.isEmpty
+              child: _loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _examList.isEmpty
                   ? const Center(child: Text('Нет созданных экзаменов'))
                   : ListView.separated(
-                itemCount: mockExamList.length,
+                itemCount: _examList.length,
                 separatorBuilder: (_, __) => const SizedBox(height: 12),
-                itemBuilder: (context, index) => ExamCard(exam: mockExamList[index]),
+                itemBuilder: (context, index) => ExamCard(exam: _examList[index]),
               ),
             ),
           ],

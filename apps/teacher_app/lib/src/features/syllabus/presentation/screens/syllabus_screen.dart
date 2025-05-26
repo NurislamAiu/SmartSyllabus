@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:teacher_app/src/core/router/route_names.dart';
 import '../../data/remote_syllabus_repository.dart';
 import '../../data/syllabus.dart';
 import '../widgets/create_option_card.dart';
@@ -58,9 +59,9 @@ class _SyllabusScreenState extends State<SyllabusScreen> {
                 subtitle: 'Автоматически создать структуру силабуса',
                 onTap: () async {
                   Navigator.of(context, rootNavigator: true).pop();
-                  final result = await GoRouter.of(context).push(RoutePaths.aiCreateSyllabus) as SyllabusAI?;
-                  if (result != null) {
-                    setState(() => _syllabusList.insert(0, result));
+                  final result = await GoRouter.of(context).push(RoutePaths.aiCreateSyllabus);
+                  if (result == true) {
+                    _loadSyllabuses();
                   }
                 },
                 gradient: const LinearGradient(colors: [Color(0xFF6A11CB), Color(0xFF2575FC)]),
@@ -95,7 +96,7 @@ class _SyllabusScreenState extends State<SyllabusScreen> {
     final data = await parseSyllabusFromPdf();
     if (data != null) {
       GoRouter.of(context).pushNamed(
-        RoutePaths.createSyllabus,
+        RouteNames.createSyllabus,
         extra: data,
       );
     }

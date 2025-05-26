@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../data/exam_model.dart';
-import '../../data/mock_exam_repository.dart';
 
 class AIGeneratedExamScreen extends StatefulWidget {
   const AIGeneratedExamScreen({super.key});
@@ -54,7 +53,6 @@ class _AIGeneratedExamScreenState extends State<AIGeneratedExamScreen> {
 
     setState(() {
       isLoading = false;
-      mockExamList.insert(0, generatedExam);
     });
 
     if (context.mounted) {

@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../data/remote_syllabus_repository.dart';
 import '../widgets/syllabus_form_helpers.dart';
 
 class CreateSyllabusForm extends StatefulWidget {
@@ -83,7 +84,10 @@ class _CreateSyllabusFormState extends State<CreateSyllabusForm> {
     }
   }
 
-  void _saveSyllabus() {
+
+  final _remote = SyllabusRemoteDataSource();
+
+  void _saveSyllabus() async {
     if (_formKey.currentState?.validate() ?? false) {
       final data = {
         'title': _titleController.text,
@@ -106,13 +110,21 @@ class _CreateSyllabusFormState extends State<CreateSyllabusForm> {
         'topicsPlan': _topicsPlanController.text,
         'semester': semester,
         'controlType': controlType,
-        'outcomes': List<String>.from(learningOutcomes),
-        'literature': List<String>.from(literature),
-        'examQuestions': List<String>.from(examQuestions),
+        'outcomes': learningOutcomes,
+        'literature': literature,
+        'examQuestions': examQuestions,
       };
 
-      debugPrint('✅ Силабус сохранён: $data');
-      Navigator.pop(context);
+      try {
+        await _remote.createSyllabus(data);
+        if (mounted) {
+          Navigator.pop(context); // вернуться назад
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Ошибка: $e')),
+        );
+      }
     }
   }
 

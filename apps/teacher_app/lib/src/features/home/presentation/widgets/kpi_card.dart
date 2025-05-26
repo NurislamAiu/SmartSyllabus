@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:go_router/go_router.dart';
+import 'package:teacher_app/src/core/router/route_names.dart';
 
 class KpiCard extends StatelessWidget {
   final String label;
@@ -39,7 +41,9 @@ class KpiCard extends StatelessWidget {
                               fontWeight: FontWeight.bold,
                               color: color)),
                       ElevatedButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          GoRouter.of(context).pushNamed(RouteNames.syllabus);
+                        },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: color,
                           foregroundColor: Colors.white,

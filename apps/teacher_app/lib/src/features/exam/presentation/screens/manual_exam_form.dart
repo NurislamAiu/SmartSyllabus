@@ -1,9 +1,8 @@
-// main screen
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../data/exam_model.dart';
-import '../../data/mock_exam_repository.dart';
+import '../../data/exam_remote_datasource.dart';
 import '../widgets/section_card_widget.dart';
 import '../widgets/test_exam_form.dart';
 import '../widgets/project_exam_form.dart';
@@ -18,6 +17,8 @@ class ManualExamForm extends StatefulWidget {
 
 class _ManualExamFormState extends State<ManualExamForm> {
   final _formKey = GlobalKey<FormState>();
+  final _remote = ExamRemoteDataSource();
+
   final _titleController = TextEditingController();
   final _criteriaController = TextEditingController();
   final _questionController = TextEditingController();
@@ -45,7 +46,7 @@ class _ManualExamFormState extends State<ManualExamForm> {
     if (picked != null) setState(() => _selectedDate = picked);
   }
 
-  void _saveExam() {
+  Future<void> _saveExam() async {
     if (!_formKey.currentState!.validate() || _selectedType == null || _selectedDate == null) return;
 
     List<String> finalQuestions = [];
@@ -66,18 +67,22 @@ class _ManualExamFormState extends State<ManualExamForm> {
       ];
     }
 
-    mockExamList.insert(
-      0,
-      ExamModel(
-        title: _titleController.text,
-        type: _selectedType!,
-        questions: finalQuestions,
-        criteria: criteria,
-        date: _selectedDate!,
-      ),
+    final exam = ExamModel(
+      title: _titleController.text,
+      type: _selectedType!,
+      questions: finalQuestions,
+      criteria: criteria,
+      date: _selectedDate!,
     );
 
-    context.pop();
+    try {
+      await _remote.createExam(exam);
+      if (context.mounted) context.pop(); // Закрыть форму
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Ошибка при сохранении: $e')),
+      );
+    }
   }
 
   @override

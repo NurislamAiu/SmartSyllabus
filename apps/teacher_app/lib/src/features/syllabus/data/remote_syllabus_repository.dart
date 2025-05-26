@@ -15,4 +15,16 @@ class SyllabusRemoteDataSource {
       throw Exception('Ошибка при загрузке силабусов');
     }
   }
+
+  Future<void> createSyllabus(Map<String, dynamic> data) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/create'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(data),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Ошибка при создании силабуса');
+    }
+  }
 }

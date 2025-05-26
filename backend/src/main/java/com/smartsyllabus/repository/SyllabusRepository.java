@@ -72,4 +72,13 @@ public class SyllabusRepository {
 
         return result;
     }
+
+    public void save(Map<String, Object> data) throws Exception {
+        Firestore db = FirestoreClient.getFirestore();
+
+        // Добавляем дату создания
+        data.put("createdAt", FieldValue.serverTimestamp());
+
+        db.collection("syllabuses").add(data).get(); // сразу выполняем
+    }
 }
