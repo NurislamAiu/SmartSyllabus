@@ -20,39 +20,6 @@ class ProfileScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
-          // Профиль
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black12,
-                  blurRadius: 6,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                const CircleAvatar(
-                  radius: 36,
-                  backgroundImage: AssetImage('assets/avatar_placeholder.png'),
-                ),
-                const SizedBox(width: 16),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Нурислам Ильясов', style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 4),
-                    Text('nurislam@university.kz', style: textTheme.bodyMedium?.copyWith(color: Colors.black54)),
-                    Text('Кафедра: Информатика', style: textTheme.bodyMedium?.copyWith(color: Colors.black54)),
-                  ],
-                ),
-              ],
-            ),
-          ),
 
           const SizedBox(height: 32),
 
